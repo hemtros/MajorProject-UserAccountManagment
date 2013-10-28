@@ -23,6 +23,33 @@ class Main extends CI_Controller {
 		echo json_encode($message);
 	}
 	
+	private function sendsms($username, $number)
+	{
+		$client_id = 'apisignup';
+		$username = 'meadhikari';
+		$password = '9kEd1tjN';
+
+		$from = '5455';
+		$to = $number;
+		$text = "Your security code is: ".substr(md5($username), 0,5);
+		$api_url =  "http://api.sparrowsms.com/call_in.php?" . 
+		http_build_query(array(
+			"client_id" => $client_id,
+			"username" => $username,
+			"password" => $password,
+			"from" => $from,
+			"to" => $to,
+			"text" => $text
+			));
+		 $response = file_get_contents($api_url);
+		 return $response;
+
+    // STEP 2
+    // put the request to server
+		$response = file_get_contents($api_url);
+    // check the response and verify
+		print_r($response);
+	}
 	//actions
 	public function index()
 	{
@@ -44,6 +71,7 @@ class Main extends CI_Controller {
 				// we here check the rows affected, if it is -1 we have a db record if not new account is created
 				if ($this->mainmodel->registration($username,$password,$phone) !== -1)
 				{
+					//echo $this->sendsms($username,$phone); //sending sms
 					$this->success("New Account Created.");
 				}
 				else

@@ -2,10 +2,24 @@
 
 class Main extends CI_Controller {
 
+	function __construct()
+	{
+
+		parent::__construct();
+		$this->load->model('mainmodel');
+
+	}
+
 	//helper function
 	private function error($msg)
 	{
 		$message["error"] = $msg; 
+		echo json_encode($message);
+	}
+
+	private function success($msg)
+	{
+		$message["success"] = $msg; 
 		echo json_encode($message);
 	}
 	
@@ -18,8 +32,6 @@ class Main extends CI_Controller {
 	{
 		header('Content-type:application/json');
 
-
-		
 		if ($_SERVER['REQUEST_METHOD'] === 'POST')
 		{
 			$username = $this->input->post('username');
@@ -28,7 +40,17 @@ class Main extends CI_Controller {
 			if ($username && $password && $phone)
 			{
 				//now we perform the database operation and report success or failure in json
-				echo "Working";
+				
+				// we here check the rows affected, if it is -1 we have a db record if not new account is created
+				if ($this->mainmodel->registration($username,$password,$phone) !== -1)
+				{
+					$this->success("New Account Created.");
+				}
+				else
+				{
+					$this->error("Database problem");
+				}
+
 			}
 			else
 			{
@@ -54,8 +76,14 @@ class Main extends CI_Controller {
 			{
 				if ($true_validation_code === $validation_code)
 				{
-					echo "success";
-					// now we update the database and make this user a valid user
+					if ($this->mainmodel->validate($username) !== -1)
+					{
+						$this->success("Congratulation. Your account has been validated.");
+					}
+					else
+					{
+						$this->error("Sorry The code you supplied is not working. Please try again.");
+					}
 
 				}
 				else
@@ -69,7 +97,8 @@ class Main extends CI_Controller {
 			}
 
 		}
-		else {
+		else 
+		{
 			$this->error("Only accepts POST requests");
 		}
 	}
@@ -83,8 +112,16 @@ class Main extends CI_Controller {
 			
 			if ($username && $password)
 			{
-				//here we connect to the database and fetch the monitored keyword, else we return an error
-				echo "Working";
+				$data = $this->mainmodel->monitored_keyword($username,$password);
+				if ( !empty($data))
+				{
+					
+					echo json_encode($data[0]);
+				}
+				else
+				{
+					$this->error("There was a error.");
+				}
 			}
 			else
 			{
@@ -104,10 +141,18 @@ class Main extends CI_Controller {
 			$username = $this->input->post('username');
 			$password = $this->input->post('password');
 			$new_keyword = $this->input->post('new_keyword');
+			
 			if ($username && $password && $new_keyword)
 			{
-				// we update the db with the new monitored keyword
-				echo "Working";
+				
+				if ($this->mainmodel->set_monitored_keyword($username,$password,$new_keyword) !== -1)
+				{
+					$this->success("Keyword {$new_keyword} started to monitor");
+				}
+				else
+				{
+					$this->error("New keyword could not be added.");
+				}
 			}
 			else
 			{
